@@ -56,7 +56,7 @@ python3 arabic_assistant
 
 ## Meta
 
-Your Name – [@Ahmed_ElShireef](https://www.facebook.com/ahmed1212005) – ahmed.121200569@gmail.com
+Ahmed ElShireef – [@Ahmed_ElShireef](https://www.facebook.com/ahmed1212005) – ahmed.121200569@gmail.com
 
 Distributed under the license. See ``LICENSE`` for more information.
 
