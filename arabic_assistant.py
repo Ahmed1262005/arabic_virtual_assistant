@@ -1,22 +1,12 @@
 import json
-from os.path import join, dirname
 from ibm_watson import SpeechToTextV1
 from ibm_watson.websocket import RecognizeCallback, AudioSource
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 import pyaudio
 import wave
-import requests
-from urllib.parse import quote
-import re
 from ibm_watson import AssistantV2
-import argparse
 from ibm_watson import TextToSpeechV1
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-import os
 import yaml
-from ibm_watson import AssistantV2
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-import simpleaudio as sa
 
 with open('apikey.yml') as f:
     data_of_yml = yaml.load(f, Loader=yaml.FullLoader)
@@ -74,40 +64,11 @@ speech_to_text.set_service_url(
     stt_url)
 
 
-class MyRecognizeCallback(RecognizeCallback):
-    def __init__(self):
-        RecognizeCallback.__init__(self)
-
-    def on_data(self, data):
-        datae = data["results"][0]["alternatives"][0]["transcript"]
-        output_response = datae
-        return output_response
-    output_response = on_data(data)
-
-    def on_error(self, error):
-        print('Error received: {}'.format(error))
-
-    def on_inactivity_timeout(self, error):
-        print('Inactivity timeout: {}'.format(error))
-
-
-question = MyRecognizeCallback.output_response
-
-myRecognizeCallback = MyRecognizeCallback()
-with open(join(dirname(__file__), '/home/pi', 'audio.wav'),
-          'rb') as audio_file:
-    audio_source = AudioSource(audio_file)
-    speech_to_text.recognize_using_websocket(
-        audio=audio_source,
-        content_type='audio/wav',
-        recognize_callback=myRecognizeCallback,
-        model='ar-AR_BroadbandModel',
-    )
-
+def tts(question):
     authenticator = IAMAuthenticator(assistant_api_key)
     assistant = AssistantV2(
         version='2020-04-01',
-        authenticator = authenticator
+        authenticator=authenticator
     )
     message_input = question
     message_input.encode('utf-8')
@@ -115,7 +76,7 @@ with open(join(dirname(__file__), '/home/pi', 'audio.wav'),
     session_id = assistant.create_session(
         assistant_id=assisstant_id
     ).get_result()
-    session_idj = json.dumps(session_id['session_id'])[1 : -1]
+    session_idj = json.dumps(session_id['session_id'])[1: -1]
     response = assistant.message(
         assistant_id=assisstant_id,
         session_id=session_idj,
@@ -141,7 +102,63 @@ with open(join(dirname(__file__), '/home/pi', 'audio.wav'),
                 voice='ar-AR_OmarVoice',
                 accept='audio/wav'
             ).get_result().content)
-filename = 'response.wav'
-wave_obj = sa.WaveObject.from_wave_file(filename)
-play_obj = wave_obj.play()
-play_obj.wait_done()  # Wait until sound has finished playing
+
+    class AudioFile:
+        chunk = 1024
+
+        def __init__(self, file):
+            """ Init audio stream """
+            self.wf = wave.open(file, 'rb')
+            self.p = pyaudio.PyAudio()
+            self.stream = self.p.open(
+                format=self.p.get_format_from_width(self.wf.getsampwidth()),
+                channels=self.wf.getnchannels(),
+                rate=self.wf.getframerate(),
+                output=True
+            )
+
+        def play(self):
+            """ Play entire file """
+            data = self.wf.readframes(self.chunk)
+            while data != '':
+                self.stream.write(data)
+                data = self.wf.readframes(self.chunk)
+
+        def close(self):
+            """ Graceful shutdown """
+            self.stream.close()
+            self.p.terminate()
+
+    # Usage example for pyaudio
+    a = AudioFile("response.wav")
+    a.play()
+    a.close()
+
+
+class MyRecognizeCallback(RecognizeCallback):
+    def __init__(self):
+        RecognizeCallback.__init__(self)
+
+    def on_data(self, data):
+        datae = data["results"][0]["alternatives"][0]["transcript"]
+        print(datae)
+        tts(datae)
+
+    def on_error(self, error):
+        print('Error received: {}'.format(error))
+
+    def on_inactivity_timeout(self, error):
+        print('Inactivity timeout: {}'.format(error))
+
+
+myRecognizeCallback = MyRecognizeCallback()
+with open('audio.wav',
+          'rb') as audio_file:
+    audio_source = AudioSource(audio_file)
+    speech_to_text.recognize_using_websocket(
+        audio=audio_source,
+        content_type='audio/wav',
+        recognize_callback=myRecognizeCallback,
+        model='ar-AR_BroadbandModel',
+    )
+
