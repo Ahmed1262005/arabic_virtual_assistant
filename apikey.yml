@@ -1,0 +1,10 @@
+stt:
+  apikey: '{Api-key-here}'
+  url: '{url-here}'
+tts:
+    apikey: '{Api-key-here}'
+    url: '{url-here}'
+assisstant:
+      apikey: '{Api-key-here}'
+      url: '{url-here}'
+      assisstant_id: '{assistant_id}'
