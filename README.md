@@ -1,5 +1,5 @@
 # arabic_virtual_assistant
-> Short blurb about what your product does.
+> Make your own arabic AI robot
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
